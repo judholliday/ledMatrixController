@@ -1,0 +1,23 @@
+<!doctype html>
+<html>
+<head>
+	<title>LED Matrix Simulator</title>
+	<link href="css/main.css" rel="stylesheet"></head>
+</head>
+<body>
+	<h1>LED Matrix Simulator</h1>
+	<ul id="matrix">
+		
+	</ul>
+	<div class='controls'>
+		<label>tempo</label>
+		<input name='tempo' id='tempo' type='number' min='0' max='5000' step='50' placeholder="0" value='100'>
+		<button id='pause'>pause</button>
+		<label>byte array</label>
+		<textarea id="output" readonly="readonly"></textarea>
+	</div>
+	<script src="/socket.io/socket.io.js"></script>
+	<script src="js/main.js"></script>
+</body>
+	
+</html>

@@ -1,0 +1,47 @@
+<!doctype html>
+<html>
+<head>
+	<title>LED Matrix Animator</title>
+	<link href="css/main.css" rel="stylesheet"></head>
+</head>
+<body>
+	<h1>LED Matrix Animator</h1>
+	<ul id="matrix">
+		
+	</ul>
+	<div class="controls">
+		<button id='save'>save</button>
+		<button id='clear'>clear</button>
+	</div>
+	
+	<div class="controls">
+		<h3>playback</h3>
+		<div id="frames">
+		
+		</div>
+
+		
+		<button id='play'>play</button>
+		<button id='pause'>pause</button>
+		<button id='clearAllFrames'>clear all frames</button>
+		<button id='saveAsFile'>save frames as file</button>
+
+		<label>tempo
+			<input name='tempo' id='tempo' type='number' min='30' max='5000' step='10' placeholder="0" value='40'>
+		</label>
+
+
+		<div id="output">
+			<label>byte array</label>
+			<textarea id="outputVal">asdf</textarea>
+		</div>
+	</div>
+		
+	</div>
+	
+	<script src="/socket.io/socket.io.js"></script>
+	<script src="js/jquery-1.8.3.min.js"></script>
+	<script src="js/animator.js"></script>
+</body>
+	
+</html>
