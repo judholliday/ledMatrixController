@@ -88,15 +88,68 @@
 	function saveText(){
 		savedText = [];
 
-		var str = $("#scrollTextInput").val();
-		var charCode;
+		var str = $("#scrollTextInput").val(),
+			charCode,
+			char,
+			reversedChar;
+
+
 		for (var i=0; i<str.length; i++){
+
+			// var charCode = str.charCodeAt(0),
+			// 	char = cp437_font[charCode],
+			// 	reversedChar = [];
+
 			charCode = str.charCodeAt(i);
-			savedText = savedText.concat(cp437_font[charCode]);
+			char = cp437_font[charCode];
+			reversedChar = [];	
+
+
+			// console.log("save text");
+
+			char = transpose8x8Matrix(char);
+
+			for (var j=0; j<8; j++){
+				reversedChar.push( reverseBitOrder(char[j]) );
+			}
+
+			savedText = reversedChar.concat(savedText);
 		}
-		console.log("savedText: ", savedText);
-		compactText();
+
+		// displayBits(reversedChar);
+
+		//compactText();
+		compactedText = savedText;
+
 	}
+
+	// function saveText(){
+	// 	savedText = [];
+
+	// 	var str = $("#scrollTextInput").val();
+	// 	var i,
+	// 		charCode, 
+	// 		char, 
+	// 		charReversed;
+
+	// 	for (i=0; i<str.length; i++){
+	// 		charReversed = [];
+	// 		charCode = str.charCodeAt(i);
+	// 		char = cp437_font[charCode];
+
+	// 		//TODO: Figure out how bits must be changed after they are transposed
+	// 		for (var j=0; j<char.length; j++){
+	// 			// charReversed.unshift( reverseBitOrder(char[j]) );
+	// 			// charReversed.unshift( char[j] );
+	// 		}
+			
+	// 		// savedText = savedText.concat(char);
+	// 		savedText = char.concat(savedText);
+	// 	}
+
+	// 	console.log("savedText: ", savedText);
+	// 	compactText();
+	// }
 
 	function compactText(){
 
@@ -213,6 +266,16 @@
 
 	}
 
+	function transpose8x8Matrix(bytes_in){
+		var bytes_out = [];
+		for(var i = 0; i < 8; i++) {
+		    for(var j = 0; j < 8; j++) {
+		        bytes_out[i] = (bytes_out[i] << 1) | ((bytes_in[j] >> (i)) & 0x01);
+		    }
+		}
+		return bytes_out;
+	}
+
 
 	function startPlayback(){
 		pausePlayback();
@@ -242,7 +305,10 @@
 	function updateSpeed(e){
 		// console.log( $(this).val() );
 		pausePlayback();
-		startPlayback();
+		if (playbackToken){
+			startPlayback();
+		}
+		
 	}
 
 	function sendFramesToDisplay(){
