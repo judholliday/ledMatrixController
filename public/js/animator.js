@@ -9,6 +9,7 @@
 	var frameIndex = 0;
 	var textIndex = 0;
 	var playbackToken;
+	var playbackType = "";
 
 	var socket;
 
@@ -65,6 +66,7 @@
 
 		$("#play").on("click", startPlayback);
 		$("#playText").on("click", startTextPlayback);
+		$("#scrollText").on("click", startTextScroll);
 		$("#pause").on("click", pausePlayback);
 		$("#tempo").on("change", updateSpeed);
 
@@ -96,30 +98,26 @@
 
 		for (var i=0; i<str.length; i++){
 
-			// var charCode = str.charCodeAt(0),
-			// 	char = cp437_font[charCode],
-			// 	reversedChar = [];
-
 			charCode = str.charCodeAt(i);
 			char = cp437_font[charCode];
 			reversedChar = [];	
 
 
-			// console.log("save text");
-
-			char = transpose8x8Matrix(char);
+			// char = transpose8x8Matrix(char);
 
 			for (var j=0; j<8; j++){
 				reversedChar.push( reverseBitOrder(char[j]) );
 			}
 
-			savedText = reversedChar.concat(savedText);
+			savedText = savedText.concat(reversedChar);
+
+			// savedText = savedText.concat(char);
+
 		}
 
 		// displayBits(reversedChar);
 
-		//compactText();
-		compactedText = savedText;
+		compactText();
 
 	}
 
@@ -173,7 +171,7 @@
 					compactedText = compactedText.concat([0,0,0]);
 				}
 				//jump forward in loop
-				i += blankCount; 
+				i += blankCount-1; 
 			}
 		}
 		console.log("compactedText: ", compactedText);
@@ -270,7 +268,7 @@
 		var bytes_out = [];
 		for(var i = 0; i < 8; i++) {
 		    for(var j = 0; j < 8; j++) {
-		        bytes_out[i] = (bytes_out[i] << 1) | ((bytes_in[j] >> (i)) & 0x01);
+		        bytes_out[i] = (bytes_out[i] << 1) | ((bytes_in[j] >> (7-i)) & 0x01);
 		    }
 		}
 		return bytes_out;
@@ -279,6 +277,8 @@
 
 	function startPlayback(){
 		pausePlayback();
+
+		playbackType = "frames";
 
 		if (savedData.length > 0) {
 			playbackToken = setInterval(sendFramesToDisplay, $('#tempo').val());
@@ -291,12 +291,28 @@
 	function startTextPlayback(){
 		pausePlayback();
 
+		playbackType = "text";
+
 		if (compactedText.length > 0) {
 			playbackToken = setInterval(sendTextToDisplay, $('#tempo').val());
 		} else {
 			alert("There is currently no text to display.");
 		}
 	}
+
+	function startTextScroll(){
+		pausePlayback();
+
+		playbackType = "textScroll";
+
+		if (compactedText.length > 0) {
+			playbackToken = setInterval(scrollTextDisplay, $('#tempo').val());
+		} else {
+			alert("There is currently no text to display.");
+		}
+	}
+
+
 
 	function pausePlayback(){
 		clearInterval(playbackToken);
@@ -306,7 +322,23 @@
 		// console.log( $(this).val() );
 		pausePlayback();
 		if (playbackToken){
-			startPlayback();
+			switch(playbackType){
+
+				case "frames":
+					startPlayback();
+					break;
+
+				case "text":
+					startTextPlayback();
+					break;
+
+				case "textScroll":
+					startTextScroll();
+					break;	
+
+				default:
+					break;
+			}
 		}
 		
 	}
@@ -323,9 +355,10 @@
 		displayBits(savedData[frameIndex]);
 	}
 
-	function sendTextToDisplay(){
+	function scrollTextDisplay(){
 
 		var out = [];
+		var revOut = [];
 		var index = textIndex;
 		for (var i=0; i<8; i++){
 			out.push(compactedText[index]);
@@ -335,6 +368,15 @@
 			}
 		}
 
+		//TODO: Fix this so that the transposed text doesn't have to be reversed again
+		out = transpose8x8Matrix(out);
+
+		for (var j=0; j<8; j++){
+			revOut.push( reverseBitOrder(out[j]) );
+		}
+
+		out = revOut;
+
 		socket.emit('message', { msg: out});
 		displayBits(out);
 
@@ -343,6 +385,39 @@
 			textIndex = 0;
 		}
 
+	}
+
+	function sendTextToDisplay(){
+
+		// console.log("hi", textIndex);
+
+		var out = [];
+		var revOut = [];
+		var index = textIndex;
+		for (var i=0; i<8; i++){
+			out.push(savedText[index]);
+			index++;
+			if (index === savedText.length){
+				index = 0;
+			}
+		}
+
+		//TODO: Fix this so that the transposed text doesn't have to be reversed again
+		out = transpose8x8Matrix(out);
+
+		for (var j=0; j<8; j++){
+			revOut.push( reverseBitOrder(out[j]) );
+		}
+
+		out = revOut;
+
+		socket.emit('message', { msg: out});
+		displayBits(out);
+
+		textIndex += 8;
+		if (textIndex >= savedText.length){
+			textIndex = 0;
+		}
 	}
 
 	function clearSavedData(){
@@ -356,9 +431,6 @@
 		
 	}
 
-	function renderOnScreen(dataArr){
-
-	}
 
 	// /* bitwise helper methods */
 	// function bitOn(r,c) {
